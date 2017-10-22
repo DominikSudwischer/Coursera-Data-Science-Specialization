@@ -56,5 +56,5 @@ library(dplyr)
 mean.df <- df %>% group_by(activity,subject) %>% summarise_all(mean)
 names(mean.df)[3:length(names(mean.df))] <- paste0("mean.of.", names(mean.df)[3:length(names(mean.df))])
 
-write.table(mean.df, file = "tidy_means.csv", sep = ",", row.names = FALSE, col.names = FALSE)
+write.table(mean.df, file = "tidy_means.txt", row.names = FALSE)
 write(names(mean.df), file = "feature_names.txt")

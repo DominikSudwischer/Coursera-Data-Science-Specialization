@@ -11,3 +11,16 @@ This script performs the main analysis. In particular, the following steps are e
 * The activity ID was replaced by a verbal description of the activity.
 * The data was grouped by activity and subject and the mean value per group was computed.
 * This data was saved as a CSV file without headers, so an accompanying feature_names.txt file has been generated as well.
+* Technical details can be found in the comments supporting the code
+
+### CodeBook.PDF/RMD
+This file describes the variables in the cleaned data set. The RMD file is the markdown source code for Knitr.
+
+### FeatureNames.txt
+In this file, the column headers of the resulting data set are stored.
+
+### tidy_means.txt
+The output file. Can be gener by executing the run_analysis.R script
+
+## Further notes
+Please note that the run_analysis.R script expects the data to be contained in a subfolder called "data" in the current working directory.
