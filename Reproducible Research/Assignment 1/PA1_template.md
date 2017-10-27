@@ -46,7 +46,7 @@ As we can see, there is a large number of NA values that we will take care of in
 ```r
 sum_steps <- function(input_df)
 {
-  output_df <- input_df[, c(1, 2)] %>% group_by(date) %>% summarise_all(funs(sum), na.rm = TRUE)
+  output_df <- input_df[, c(1, 2)] %>% group_by(date) %>% summarise_all(funs(sum))
   colnames(output_df) = c("date", "number_of_steps")
   output_df
 }
@@ -63,7 +63,7 @@ day_classification <- function(date)
   }
 }
 ```
-These functions will help calculate the total number of steps per day and classify each day as either a weekday or a weekend day.
+These functions will help calculate the total number of steps per day and classify each day as either a weekday or a weekend day. It is important to note that the sum will only be non-NA for days with complete records. Otherwise the data would be biased because them sum would be too little.
 Next, we will group the steps by date and sum them up. A histogram shows the data.
 
 ```r
@@ -71,6 +71,10 @@ total_steps_per_day <- sum_steps(df)
 colnames(total_steps_per_day) = c("date", "number_of_steps")
 g <- ggplot(total_steps_per_day, aes(total_steps_per_day$number_of_steps))
 g + geom_histogram(binwidth = 2000) + labs(x = "Number of Steps", y = "Count")
+```
+
+```
+## Warning: Removed 8 rows containing non-finite values (stat_bin).
 ```
 
 ![](PA1_template_files/figure-html/3-1.png)<!-- -->
@@ -81,7 +85,7 @@ mean(total_steps_per_day$number_of_steps, na.rm = TRUE)
 ```
 
 ```
-## [1] 9354.23
+## [1] 10766.19
 ```
 
 ```r
@@ -89,7 +93,7 @@ median(total_steps_per_day$number_of_steps, na.rm = TRUE)
 ```
 
 ```
-## [1] 10395
+## [1] 10765
 ```
 
 ## The Average Daily Activity Pattern
@@ -174,7 +178,7 @@ g + geom_line() + labs(x = "Interval", y = "Average Number of Steps")
 ```
 
 ![](PA1_template_files/figure-html/9-2.png)<!-- -->
-As we can observe, the mean value hasincreased significantly while the new median is comparable to the old value. In this case, the difference between median and mean has shrunken, removing a bit of the skew of the data. 
+As we can observe, neither mean nor median have changed significantly. 
 
 ## Differences Between Activity Patterns on Weekdays and Weekends
 We conclude with a final data manipulation to visualize differences in the activity pattern between weekends and weekdays. First, we introduce a factor variable to indicate whether a given record represents a weekday or is in the weekend. Further, we implement group the data by this factor and interval and calculate the arithmetic mean.
