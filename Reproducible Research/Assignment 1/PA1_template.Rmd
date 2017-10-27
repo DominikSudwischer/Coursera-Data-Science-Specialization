@@ -108,6 +108,7 @@ g + geom_histogram(binwidth = 2000) + labs(x = "Number of Steps", y = "Count")
 g <- ggplot(average_per_interval, aes(average_per_interval$Interval, average_per_interval$Mean_Steps))
 g + geom_line() + labs(x = "Interval", y = "Average Number of Steps")
 ```
+
 As we can observe, neither mean nor median have changed significantly. 
 
 ## Differences Between Activity Patterns on Weekdays and Weekends

@@ -178,6 +178,7 @@ g + geom_line() + labs(x = "Interval", y = "Average Number of Steps")
 ```
 
 ![](PA1_template_files/figure-html/9-2.png)<!-- -->
+
 As we can observe, neither mean nor median have changed significantly. 
 
 ## Differences Between Activity Patterns on Weekdays and Weekends
