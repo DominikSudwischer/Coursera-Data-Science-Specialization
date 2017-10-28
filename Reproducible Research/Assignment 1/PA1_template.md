@@ -78,6 +78,7 @@ g + geom_histogram(binwidth = 2000) + labs(x = "Number of Steps", y = "Count")
 ```
 
 ![](PA1_template_files/figure-html/3-1.png)<!-- -->
+
 The mean and median number of steps taken per day are as follows:
 
 ```r
@@ -107,6 +108,7 @@ g + geom_line() + labs(x = "Interval", y = "Average Number of Steps")
 ```
 
 ![](PA1_template_files/figure-html/5-1.png)<!-- -->
+
 The maximum number of steps seems to be somewhere around 8:00 a.m. but we will extract the exact interval using R:
 
 ```r
