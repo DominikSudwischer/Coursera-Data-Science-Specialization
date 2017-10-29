@@ -1,0 +1,214 @@
+---
+title: "Effects of Storms in the United States on Population Health and Economy"
+author: "Dominik Sudwischer"
+date: "29 October 2017"
+output:
+  pdf_document:
+    keep_tex: yes
+  html_document:
+    keep_md: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Synopsis
+This analysis examines the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database contains records of storms and related weather events in the United States including estimations of caused damage. The damage can be categorized in two groups: population health damage like injuries or fatalities and economic damage like destruction of property. Our main goal is to analyse the type of events that were most dangerous to each of the two categories during the years from 2005 through 2011. Our analysis will show that the top 3 hazards with direct health impact are tornadoes, excessive heat and lightning while the destructive force of thunderstorm wind, flash flood and tornadoes caused the majority of property damage.
+
+## Used Packages
+The following packages will be used in this report:
+```{r packages, results = 'hide', warning = FALSE}
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+```
+
+## Data Processing
+We start by loading the provided file from the NOAA containing records from 1950 to 2011.
+```{r load_data, cache = TRUE}
+df <- read.csv("repdata%2Fdata%2FStormData.csv.bz2")
+summary(df)
+```
+The data contains more than 900000 observations with 37 variables in total. 
+The event type is stored as a factor in the "EVTYPE" column and has 985 levels, some of which indicate summaries. We will investigate which  events are the most hazardous in terms of health damage or property damage. We will focus our research to work with recent calamities, considering only data from 2005 up to 2011. For this reason, we will begin with a suitable date conversion of the BGN_DATE column.
+```{r format_date_and_extract_years}
+df$YEAR <- year(as.Date.character(df$BGN_DATE, format = "%m/%d/%Y"))
+```
+### Selecting a Suitable Subset of the Data
+We will create a copy of our original data frame that only contains a subset of the records, in particular it will comprise all records from 2005 through 2011.
+```{r create_recent_data_frame}
+records <- cbind(df)[df$YEAR >= 2005, ]
+dim(records)
+```
+As we can see, we selected a bit more than a third of the original data set. The density of reports and the recent years has inceased drastically, so it is natural that a small subset of the most recent observed years contains a large proportion of the records.
+We will need to observe property and health damage seperately, so we will split our data accordingly.
+### Splitting the Data for Further Analysis
+```{r split_health_and_prop}
+health_df <- records[, c("INJURIES", "FATALITIES", "EVTYPE")]
+prop_df <- records[, c("PROPDMG", "EVTYPE")]
+```
+Next, we check our subset of the data for missing values.
+```{r check_for_na}
+sum(matrix(data = is.na(health_df), ncol = 1))
+sum(matrix(data = is.na(prop_df), ncol = 1))
+```
+Neither of our data frames have NA values, so we can continue analysing the data. We will begin with the health data by grouping by event and summing up injuries and fatalities. We will also introduce a variable called "DAMAGE" that is the weighted sum of injuries (with factor 1) and fatalities (with factor 4). Additionally, we will sort the data by this new column in descending order.
+```{r sum_and_add_column}
+health_df_agg <- health_df[, c("INJURIES", "FATALITIES")] %>%
+  group_by(health_df$EVTYPE) %>% summarise_all(funs(sum))
+health_df_agg$DAMAGE = health_df_agg$INJURIES + 4 * health_df_agg$FATALITIES
+health_df_agg <- health_df_agg[order(-health_df_agg$DAMAGE, -health_df_agg$FATALITIES), ]
+colnames(health_df_agg)[1] = "EVTYPE"
+```
+We will to the same for recorded cases of property damage.
+```{r sum_2}
+prop_df_agg <- prop_df %>% group_by(prop_df$EVTYPE) %>%
+  summarise(PROPDMG = sum(PROPDMG))
+prop_df_agg <- prop_df_agg[order(-prop_df_agg$PROPDMG), ]
+colnames(prop_df_agg)[1] = "EVTYPE"
+```
+
+## Results
+In this section, we will use the multiplot function. The code and the source can be found in the appendix. Unfortunately, due to the strict grading guidelines, I am forced to include the code here as well:
+```{r multiplot_def_2}
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+
+
+The preparations performed above allow us to generate insights from the data. We will begin with a bar plot of the 6 top hazards for health and for the economy. 
+```{r b}
+g <- ggplot(data=head(health_df_agg), aes(reorder(EVTYPE, -DAMAGE), DAMAGE)) +
+  geom_bar(stat = "identity", fill="#FF9999", color = "black") + 
+  labs(x = "Weather Event", y = "Weighted Population Damage",
+       caption = "Weighted Population Damage of Various Weather\nEvents from 2005 to 2011") + 
+  #ggtitle("Weighted Population Damage of Various Weather Events from 2005 to 2011") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+h <- ggplot(data=head(prop_df_agg), aes(reorder(EVTYPE, -PROPDMG), PROPDMG)) +
+  geom_bar(stat = "identity", fill="#FF9999", color = "black") + 
+  labs(x = "Weather Event", y = "Property Damage",
+       caption = "Property Damage of Various Weather\nEvents from 2005 to 2011") + 
+  #ggtitle("Property Damage of Various Weather Events from 2005 to 2011") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+multiplot(g, h, cols = 2)
+```
+
+We can easily see that tornadoes have the a tremendous impact on health according to our weighted damage, followed by excessive heat and lightning with much lower numbers. In particular, the numbers of injuries and fatalities due to the 3 most dangerous hazards is as follows:
+```{r numbers_for_health}
+health_df_agg[health_df_agg$EVTYPE %in% c("TORNADO", "EXCESSIVE HEAT", "LIGHTNING"), ]
+```
+
+As for property damage, tornodoes cause heavy damage as well. However, tornadoes are surpassed by flash flood and, by a huge margin, also by thunderstorm wind. The numbers can be seen below:
+```{r numbers_for_property}
+prop_df_agg[prop_df_agg$EVTYPE %in% c("THUNDERSTORM WIND", "FLASH FLOOD", "TORNADO"), ]
+```
+
+Finally, we will have a glance at the trend for injuries and fatalities by tornadoes since the beginning of the observations.
+```{r prepare_data_for_tornado_graph}
+tornado_data <- df[df$EVTYPE == "TORNADO", c("INJURIES", "FATALITIES", "YEAR")]
+tornado_data <- tornado_data %>% group_by(tornado_data$YEAR) %>%
+  summarise(SUM_INJURIES = sum(INJURIES), SUM_FATALITIES = sum(FATALITIES))
+colnames(tornado_data)[1] = "YEAR"
+g <- ggplot(data=tornado_data, aes(YEAR)) +
+  geom_line(aes(y = tornado_data$SUM_INJURIES)) + 
+  scale_x_continuous(breaks = seq(1950, 2011, 5),1) +
+  labs(x = "Year", y = "Injuries",
+       caption = "Injuries by Tornadoes per Year") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+h <- ggplot(data=tornado_data, aes(YEAR)) +
+  geom_line(aes(y = tornado_data$SUM_FATALITIES)) + 
+  scale_x_continuous(breaks = seq(1950, 2011, 5),1) +
+  labs(x = "Year", y = "Fatalities",
+       caption = "Fatalities by Tornadoes per Year") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+multiplot(g, h)
+```
+
+As we can see, there are some spikes in the data corresponding to extraordinarily threatening tornadoes.
+
+We conclude our analysis with the remark that the most dangerous hazards for population health are indeed tornadoes, excessive heat and lightning. The most property damage is caused by thunderstorm wind, flash flood and tornadoes.
+
+## Appendix
+This is the definition of the multiplot function. [Source][1]:
+```{r multiplot_function}
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
+[1]: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)
