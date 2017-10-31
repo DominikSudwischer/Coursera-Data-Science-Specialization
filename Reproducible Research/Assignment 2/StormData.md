@@ -1,11 +1,11 @@
 # Effects of Storms in the United States on Population Health and Economy
 Dominik Sudwischer  
-29 Oktober 2017  
+29 October 2017  
 
 
 
 ## Synopsis
-This analysis examines the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database contains records of storms and related weather events in the United States including estimations of caused damage. The damage can be categorized in two groups: population health damage like injuries or fatalities and economic damage like destruction of property. Our main goal is to analyse the type of events that were most dangerous to each of the two categories during the years from 2005 through 2011. Our analysis will show that the top 3 hazards with direct health impact are tornadoes, excessive heat and lightning while the destructive force of thunderstorm wind, flash flood and tornadoes caused the majority of property damage.
+This analysis examines the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database contains records of storms and related weather events in the United States including estimations of caused damage. The damage can be categorized in two groups: population health damage such as injuries or fatalities and economic damage like destruction of property. Our main goal is to analyse which type of events were most dangerous to each of the two categories during the years from 2005 through 2011. Our analysis will show that the top 3 hazards with direct health impact are hurricanes, excessive heat and thunderstorms while the destructive force of hurricanes, flood and - to much less extent - thunderstorms caused the majority of economic damage.
 
 ## Used Packages
 The following packages will be used in this report:
@@ -57,55 +57,10 @@ library(ggplot2)
 ```
 
 ## Data Processing
-We start by loading the provided file from the NOAA containing records from 1950 to 2011.
+We start by loading the provided file from the NOAA which contains records from 1950 to 2011.
 
 ```r
 df <- read.csv("repdata%2Fdata%2FStormData.csv.bz2")
-str(df)
-```
-
-```
-## 'data.frame':	902297 obs. of  37 variables:
-##  $ STATE__   : num  1 1 1 1 1 1 1 1 1 1 ...
-##  $ BGN_DATE  : Factor w/ 16335 levels "1/1/1966 0:00:00",..: 6523 6523 4242 11116 2224 2224 2260 383 3980 3980 ...
-##  $ BGN_TIME  : Factor w/ 3608 levels "00:00:00 AM",..: 272 287 2705 1683 2584 3186 242 1683 3186 3186 ...
-##  $ TIME_ZONE : Factor w/ 22 levels "ADT","AKS","AST",..: 7 7 7 7 7 7 7 7 7 7 ...
-##  $ COUNTY    : num  97 3 57 89 43 77 9 123 125 57 ...
-##  $ COUNTYNAME: Factor w/ 29601 levels "","5NM E OF MACKINAC BRIDGE TO PRESQUE ISLE LT MI",..: 13513 1873 4598 10592 4372 10094 1973 23873 24418 4598 ...
-##  $ STATE     : Factor w/ 72 levels "AK","AL","AM",..: 2 2 2 2 2 2 2 2 2 2 ...
-##  $ EVTYPE    : Factor w/ 985 levels "   HIGH SURF ADVISORY",..: 834 834 834 834 834 834 834 834 834 834 ...
-##  $ BGN_RANGE : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ BGN_AZI   : Factor w/ 35 levels "","  N"," NW",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ BGN_LOCATI: Factor w/ 54429 levels "","- 1 N Albion",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ END_DATE  : Factor w/ 6663 levels "","1/1/1993 0:00:00",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ END_TIME  : Factor w/ 3647 levels ""," 0900CST",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ COUNTY_END: num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ COUNTYENDN: logi  NA NA NA NA NA NA ...
-##  $ END_RANGE : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ END_AZI   : Factor w/ 24 levels "","E","ENE","ESE",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ END_LOCATI: Factor w/ 34506 levels "","- .5 NNW",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ LENGTH    : num  14 2 0.1 0 0 1.5 1.5 0 3.3 2.3 ...
-##  $ WIDTH     : num  100 150 123 100 150 177 33 33 100 100 ...
-##  $ F         : int  3 2 2 2 2 2 2 1 3 3 ...
-##  $ MAG       : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ FATALITIES: num  0 0 0 0 0 0 0 0 1 0 ...
-##  $ INJURIES  : num  15 0 2 2 2 6 1 0 14 0 ...
-##  $ PROPDMG   : num  25 2.5 25 2.5 2.5 2.5 2.5 2.5 25 25 ...
-##  $ PROPDMGEXP: Factor w/ 19 levels "","-","?","+",..: 17 17 17 17 17 17 17 17 17 17 ...
-##  $ CROPDMG   : num  0 0 0 0 0 0 0 0 0 0 ...
-##  $ CROPDMGEXP: Factor w/ 9 levels "","?","0","2",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ WFO       : Factor w/ 542 levels ""," CI","$AC",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ STATEOFFIC: Factor w/ 250 levels "","ALABAMA, Central",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ ZONENAMES : Factor w/ 25112 levels "","                                                                                                               "| __truncated__,..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ LATITUDE  : num  3040 3042 3340 3458 3412 ...
-##  $ LONGITUDE : num  8812 8755 8742 8626 8642 ...
-##  $ LATITUDE_E: num  3051 0 0 0 0 ...
-##  $ LONGITUDE_: num  8806 0 0 0 0 ...
-##  $ REMARKS   : Factor w/ 436781 levels "","-2 at Deer Park\n",..: 1 1 1 1 1 1 1 1 1 1 ...
-##  $ REFNUM    : num  1 2 3 4 5 6 7 8 9 10 ...
-```
-
-```r
 summary(df)
 ```
 
@@ -208,7 +163,89 @@ summary(df)
 ##  (Other)                                       :588295
 ```
 The data contains more than 900000 observations with 37 variables in total. 
-The event type is stored as a factor in the "EVTYPE" column and has 985 levels, some of which indicate summaries. We will investigate which  events are the most hazardous in terms of health damage or property damage. We will focus our research to work with recent calamities, considering only data from 2005 up to 2011. For this reason, we will begin with a suitable date conversion of the BGN_DATE column.
+The event type is stored as a factor in the "EVTYPE" column and has 985 levels, some of which indicate summaries and some of which still have to be combined. We will investigate which events are the most hazardous in terms of health damage or property damage.
+
+The data is a bit unclean, so we will need to do some work before can we can analyse the data. We start with transforming letters to lower case in columns describing the events and columns specifying damage multipliers (the "...exp" columns with factors like "M", "k" and so on).
+
+
+```r
+df[, c("CROPDMGEXP", "PROPDMGEXP", "EVTYPE")] <-
+  data.frame(sapply(df[, c("CROPDMGEXP", "PROPDMGEXP", "EVTYPE")], tolower))
+unique(df$CROPDMGEXP)
+```
+
+```
+## [1]   m k b ? 0 2
+## Levels:  ? 0 2 b k m
+```
+
+```r
+unique(df$PROPDMGEXP)
+```
+
+```
+##  [1] k m   b + 0 5 6 ? 4 2 3 h 7 - 1 8
+## Levels:  - ? + 0 1 2 3 4 5 6 7 8 b h k m
+```
+
+The data "exp" columns indicate the power of 10 that should be multiplied with the number in the actual damage column. The values "?", "+" and "-" are not usable because they do not clearly state what they stand for, so we will remove those lines. A blank entry corresponds to the factor 1 (or the exponent 0). Other than that, "b" (billion) is 10^9, "m" (mega) is 10^6, "k" (kilo) is 10^3 and "h" (hecto) is 10^2. We will add a new column, "TOTALECONDMG", by multiplying crop and property damage by their respective factors and adding them.
+
+
+```r
+selection <- !((df$CROPDMGEXP %in% c("+", "-", "?")) |
+                 (df$PROPDMGEXP %in% c("+", "-", "?")))
+df <- df[selection, ]
+df$PROPDMGFACTOR <- 1
+df$PROPDMGFACTOR[df$PROPDMGEXP == "h"] <- 100
+df$PROPDMGFACTOR[df$PROPDMGEXP == "k"] <- 1000
+df$PROPDMGFACTOR[df$PROPDMGEXP == "m"] <- 1000000
+df$PROPDMGFACTOR[df$PROPDMGEXP == "b"] <- 1000000000
+selection <- !is.na(as.numeric(df$PROPDMGEXP))
+df$CROPDMGFACTOR[selection] <- 10^as.numeric(df$CROPDMGEXP[selection])
+df$CROPDMGFACTOR <- 1
+df$CROPDMGFACTOR[df$CROPDMGEXP == "h"] <- 100
+df$CROPDMGFACTOR[df$CROPDMGEXP == "k"] <- 1000
+df$CROPDMGFACTOR[df$CROPDMGEXP == "m"] <- 1000000
+df$CROPDMGFACTOR[df$CROPDMGEXP == "b"] <- 1000000000
+selection <- !is.na(as.numeric(df$CROPDMGEXP))
+df$CROPDMGFACTOR[selection] <- 10^as.numeric(df$CROPDMGEXP[selection])
+df$TOTALECONDMG <- as.numeric(df$CROPDMG) *
+  as.numeric(df$PROPDMGFACTOR) +
+  as.numeric(df$PROPDMG) *
+  as.numeric(df$PROPDMGFACTOR)
+```
+
+Now that we have useful data for economic damage, we will clean the event descriptions. The data uses different words for similar weather events such as "very dry" and "drought". We will consolidate the data a bit. However, since there are 985 different factor levels, a very sophisticated method for consolidation is difficult to develop and beyond the scope of this report. Instead we will use a simpler method.
+
+
+```r
+consolidate <- function(event)
+{
+  if(grepl("hurricane|typhoon|tornado", event))
+    { "hurricane" }
+  else if(grepl("drought|dry|hot|heat|warm|high temp|warmth", event))
+    { "heatwave" }
+  else if(grepl("blizzard|hail|snow|glaze", event))
+    { "blizzard" }
+  else if(grepl("tstm|thunderstorm|wind", event))
+    { "thunderstorm or heavy wind" }
+  else if(grepl("rain|wet", event))
+    { "rainfall" }
+  else if(grepl("ice|icy|cold|low temp|freez", event))
+  { "low temperature" }
+  else if(grepl("flood|surge", event))
+    { "flood" }
+  else { event }
+}
+```
+
+We can now modify the event column using this function.
+
+```r
+df$EVTYPE <- as.factor(sapply(as.character(df$EVTYPE), consolidate))
+```
+
+We will focus our research to work with recent calamities, considering only data from 2005 up to 2011. For this reason, we will begin with a suitable date conversion of the BGN_DATE column.
 
 ```r
 df$YEAR <- year(as.Date.character(df$BGN_DATE, format = "%m/%d/%Y"))
@@ -217,20 +254,16 @@ df$YEAR <- year(as.Date.character(df$BGN_DATE, format = "%m/%d/%Y"))
 We will create a copy of our original data frame that only contains a subset of the records, in particular it will comprise all records from 2005 through 2011.
 
 ```r
-records <- cbind(df)[df$YEAR >= 2005, ]
-dim(records)
-```
-
-```
-## [1] 338322     38
+records <- df[df$YEAR >= 2005, ]
 ```
 As we can see, we selected a bit more than a third of the original data set. The density of reports and the recent years has inceased drastically, so it is natural that a small subset of the most recent observed years contains a large proportion of the records.
-We will need to observe property and health damage seperately, so we will split our data accordingly.
+
+We will need to observe economic and health damage seperately, so we will split our data accordingly.
 ### Splitting the Data for Further Analysis
 
 ```r
 health_df <- records[, c("INJURIES", "FATALITIES", "EVTYPE")]
-prop_df <- records[, c("PROPDMG", "EVTYPE")]
+econ_df <- records[, c("TOTALECONDMG", "EVTYPE")]
 ```
 Next, we check our subset of the data for missing values.
 
@@ -243,37 +276,32 @@ sum(matrix(data = is.na(health_df), ncol = 1))
 ```
 
 ```r
-sum(matrix(data = is.na(prop_df), ncol = 1))
+sum(matrix(data = is.na(econ_df), ncol = 1))
 ```
 
 ```
 ## [1] 0
 ```
-Neither of our data frames have NA values, so we can continue analysing the data. We will begin with the health data by grouping by event and summing up injuries and fatalities. We will also introduce a variable called "DAMAGE" that is the weighted sum of injuries (with factor 1) and fatalities (with factor 4). Additionally, we will sort the data by this new column in descending order.
+Neither of our data frames have NA values, so we can continue analysing the data. We will begin with the health data by grouping by event and summing up injuries and fatalities. We will also introduce a variable called "DAMAGE" which is the weighted sum of injuries (with factor 1) and fatalities (with factor 4). Additionally, we will sort the data by this new column in descending order.
 
 ```r
-health_df_agg <- health_df[, c("INJURIES", "FATALITIES")] %>% group_by(health_df$EVTYPE) %>% summarise_all(funs(sum))
-```
-
-```
-## Warning: package 'bindrcpp' was built under R version 3.4.2
-```
-
-```r
+health_df_agg <- health_df[, c("INJURIES", "FATALITIES")] %>%
+  group_by(health_df$EVTYPE) %>% summarise_all(funs(sum))
 health_df_agg$DAMAGE = health_df_agg$INJURIES + 4 * health_df_agg$FATALITIES
 health_df_agg <- health_df_agg[order(-health_df_agg$DAMAGE, -health_df_agg$FATALITIES), ]
 colnames(health_df_agg)[1] = "EVTYPE"
 ```
-We will to the same for recorded cases of property damage.
+We will do the same for recorded cases of economic damage.
 
 ```r
-prop_df_agg <- prop_df %>% group_by(prop_df$EVTYPE) %>% summarise(PROPDMG = sum(PROPDMG))
-prop_df_agg <- prop_df_agg[order(-prop_df_agg$PROPDMG), ]
-colnames(prop_df_agg)[1] = "EVTYPE"
+econ_df_agg <- econ_df %>% group_by(econ_df$EVTYPE) %>%
+  summarise(TOTALECONDMG = sum(TOTALECONDMG))
+econ_df_agg <- econ_df_agg[order(-econ_df_agg$TOTALECONDMG), ]
+colnames(econ_df_agg)[1] = "EVTYPE"
 ```
 
 ## Results
-In this section, we will use the multiplot function. The code and the source can be found in the appendix. Unfortunately, due to the strict grading guidelines, I am forced to include the code here as well:
+In this section, we will use the multiplot function. The code and the source can be found in the appendix. Unfortunately, due to the strict grading guidelines, I am forced to include the code here as well rather than only in the appendix:
 
 ```r
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
@@ -319,71 +347,73 @@ The preparations performed above allow us to generate insights from the data. We
 ```r
 g <- ggplot(data=head(health_df_agg), aes(reorder(EVTYPE, -DAMAGE), DAMAGE)) +
   geom_bar(stat = "identity", fill="#FF9999", color = "black") + 
-  labs(x = "Weather Event", y = "Weighted Population Damage") + 
+  labs(x = "Weather Event", y = "Weighted Population Damage",
+       caption = "Weighted Population Damage of Various Weather\nEvents from 2005 to 2011") + 
+  #ggtitle("Weighted Population Damage of Various Weather Events from 2005 to 2011") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-h <- ggplot(data=head(prop_df_agg), aes(reorder(EVTYPE, -PROPDMG), PROPDMG)) +
+h <- ggplot(data=head(econ_df_agg), aes(reorder(EVTYPE, -TOTALECONDMG), TOTALECONDMG)) +
   geom_bar(stat = "identity", fill="#FF9999", color = "black") + 
-  labs(x = "Weather Event", y = "Property Damage") + 
+  labs(x = "Weather Event", y = "Economic Damage",
+       caption = "Economic Damage of Various Weather\nEvents from 2005 to 2011 in USD") + 
+  #ggtitle("Economic Damage of Various Weather Events from 2005 to 2011") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 multiplot(g, h, cols = 2)
 ```
 
-![](StormData_files/figure-html/b-1.png)<!-- -->
+![](StormData_files/figure-html/damage_plots-1.png)<!-- -->
 
-We can easily see that tornadoes have the a tremendous impact on health according to our weighted damage, followed by excessive heat and lightning with much lower numbers. In particular, the numbers of injuries and fatalities due to the 3 most dangerous hazards is as follows:
+We can easily see that hurricanes have a tremendous impact on health according to our weighted damage, followed by excessive heat and thunderstorms with much lower numbers. In particular, the numbers of injuries and fatalities due to the 3 most dangerous hazards is as follows:
 
 ```r
-health_df_agg[health_df_agg$EVTYPE %in% c("TORNADO", "EXCESSIVE HEAT", "LIGHTNING"), ]
+health_df_agg[health_df_agg$EVTYPE %in% c("hurricane", "heatwave",
+                                          "thunderstorm or heavy wind"), ]
 ```
 
 ```
 ## # A tibble: 3 x 4
-##           EVTYPE INJURIES FATALITIES DAMAGE
-##           <fctr>    <dbl>      <dbl>  <dbl>
-## 1        TORNADO    11137        968  15009
-## 2 EXCESSIVE HEAT     2171        482   4099
-## 3      LIGHTNING     1477        242   2445
+##                       EVTYPE INJURIES FATALITIES DAMAGE
+##                       <fctr>    <dbl>      <dbl>  <dbl>
+## 1                  hurricane    11268       1004  15284
+## 2                   heatwave     3397        711   6241
+## 3 thunderstorm or heavy wind     2283        486   4227
 ```
 
-As for property damage, tornodoes cause heavy damage as well. However, tornadoes are surpassed by flash flood and, by a huge margin, also by thunderstorm wind. The numbers can be seen below:
+As for economic damage, hurricanes cause enormous damage as well. Second to them are only flood and far, far behind thunderstorm. The numbers can be seen below:
 
 ```r
-prop_df_agg[prop_df_agg$EVTYPE %in% c("THUNDERSTORM WIND", "FLASH FLOOD", "TORNADO"), ]
+econ_df_agg[econ_df_agg$EVTYPE %in% c("hurricane", "flood", "thunderstorm or heavy wind"), ]
 ```
 
 ```
 ## # A tibble: 3 x 2
-##              EVTYPE  PROPDMG
-##              <fctr>    <dbl>
-## 1 THUNDERSTORM WIND 862257.4
-## 2       FLASH FLOOD 637545.2
-## 3           TORNADO 608380.5
+##                       EVTYPE TOTALECONDMG
+##                       <fctr>        <dbl>
+## 1                  hurricane 384394116367
+## 2                      flood 266995036151
+## 3 thunderstorm or heavy wind  15045093540
 ```
 
-Finally, we will have a glance at the trend for injuries and fatalities by tornadoes since the beginning of the observations.
+Finally, we will have a glance at the trend for fatalities by hurricanes since the beginning of the observations.
 
 ```r
-tornado_data <- df[df$EVTYPE == "TORNADO", c("INJURIES", "FATALITIES", "YEAR")]
-tornado_data <- tornado_data %>% group_by(tornado_data$YEAR) %>% summarise(SUM_INJURIES = sum(INJURIES), SUM_FATALITIES = sum(FATALITIES))
+tornado_data <- df[df$EVTYPE == "hurricane", c("FATALITIES", "YEAR")]
+tornado_data <- tornado_data %>% group_by(tornado_data$YEAR) %>%
+  summarise(SUM_FATALITIES = sum(FATALITIES))
 colnames(tornado_data)[1] = "YEAR"
 g <- ggplot(data=tornado_data, aes(YEAR)) +
-  geom_line(aes(y = tornado_data$SUM_INJURIES)) + 
-  scale_x_continuous(breaks = seq(1950, 2011, 5),1) +
-  labs(x = "Year", y = "Injuries") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-h <- ggplot(data=tornado_data, aes(YEAR)) +
   geom_line(aes(y = tornado_data$SUM_FATALITIES)) + 
-  scale_x_continuous(breaks = seq(1950, 2011, 5),1) +
-  labs(x = "Year", y = "Fatalities") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-multiplot(g, h)
+  scale_x_continuous(breaks = seq(1950, 2011, 5), "Year") +
+  labs(x = "Year", y = "Injuries",
+       caption = "Fatalities by Hurricanes per Year") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+g
 ```
 
 ![](StormData_files/figure-html/prepare_data_for_tornado_graph-1.png)<!-- -->
 
 As we can see, there are some spikes in the data corresponding to extraordinarily threatening tornadoes.
 
-We conclude our analysis with the remark that the most dangerous hazards for population health are indeed tornadoes, excessive heat and lightning. The most property damage is caused by thunderstorm wind, flash flood and tornadoes.
+We conclude our analysis with the remark that the most dangerous hazards for population health are indeed hurricanes, excessive heat and thunderstorms. The most economic damage is caused by hurricanes and flood.
 
 ## Appendix
 This is the definition of the multiplot function. [Source][1]:

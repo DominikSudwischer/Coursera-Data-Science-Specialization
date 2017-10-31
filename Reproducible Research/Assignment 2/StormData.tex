@@ -133,13 +133,14 @@ This analysis examines the U.S. National Oceanic and Atmospheric
 Administration's (NOAA) storm database. This database contains records
 of storms and related weather events in the United States including
 estimations of caused damage. The damage can be categorized in two
-groups: population health damage like injuries or fatalities and
+groups: population health damage such as injuries or fatalities and
 economic damage like destruction of property. Our main goal is to
-analyse the type of events that were most dangerous to each of the two
+analyse which type of events were most dangerous to each of the two
 categories during the years from 2005 through 2011. Our analysis will
-show that the top 3 hazards with direct health impact are tornadoes,
-excessive heat and lightning while the destructive force of thunderstorm
-wind, flash flood and tornadoes caused the majority of property damage.
+show that the top 3 hazards with direct health impact are hurricanes,
+excessive heat and thunderstorms while the destructive force of
+hurricanes, flood and - to much less extent - thunderstorms caused the
+majority of economic damage.
 
 \subsection{Used Packages}\label{used-packages}
 
@@ -199,8 +200,8 @@ The following packages will be used in this report:
 
 \subsection{Data Processing}\label{data-processing}
 
-We start by loading the provided file from the NOAA containing records
-from 1950 to 2011.
+We start by loading the provided file from the NOAA which contains
+records from 1950 to 2011.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -310,11 +311,117 @@ from 1950 to 2011.
 
 The data contains more than 900000 observations with 37 variables in
 total. The event type is stored as a factor in the ``EVTYPE'' column and
-has 985 levels, some of which indicate summaries. We will investigate
-which events are the most hazardous in terms of health damage or
-property damage. We will focus our research to work with recent
-calamities, considering only data from 2005 up to 2011. For this reason,
-we will begin with a suitable date conversion of the BGN\_DATE column.
+has 985 levels, some of which indicate summaries and some of which still
+have to be combined. We will investigate which events are the most
+hazardous in terms of health damage or property damage.
+
+The data is a bit unclean, so we will need to do some work before can we
+can analyse the data. We start with transforming letters to lower case
+in columns describing the events and columns specifying damage
+multipliers (the ``\ldots{}exp'' columns with factors like ``M'', ``k''
+and so on).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df[, }\KeywordTok{c}\NormalTok{(}\StringTok{"CROPDMGEXP"}\NormalTok{, }\StringTok{"PROPDMGEXP"}\NormalTok{, }\StringTok{"EVTYPE"}\NormalTok{)] <-}
+\StringTok{  }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{sapply}\NormalTok{(df[, }\KeywordTok{c}\NormalTok{(}\StringTok{"CROPDMGEXP"}\NormalTok{, }\StringTok{"PROPDMGEXP"}\NormalTok{, }\StringTok{"EVTYPE"}\NormalTok{)], tolower))}
+\KeywordTok{unique}\NormalTok{(df$CROPDMGEXP)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1]   m k b ? 0 2
+## Levels:  ? 0 2 b k m
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{unique}\NormalTok{(df$PROPDMGEXP)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##  [1] k m   b + 0 5 6 ? 4 2 3 h 7 - 1 8
+## Levels:  - ? + 0 1 2 3 4 5 6 7 8 b h k m
+\end{verbatim}
+
+The data ``exp'' columns indicate the power of 10 that should be
+multiplied with the number in the actual damage column. The values
+``?'', ``+'' and ``-'' are not usable because they do not clearly state
+what they stand for, so we will remove those lines. A blank entry
+corresponds to the factor 1 (or the exponent 0). Other than that, ``b''
+(billion) is 10\^{}9, ``m'' (mega) is 10\^{}6, ``k'' (kilo) is 10\^{}3
+and ``h'' (hecto) is 10\^{}2. We will add a new column,
+``TOTALECONDMG'', by multiplying crop and property damage by their
+respective factors and adding them.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{selection <-}\StringTok{ }\NormalTok{!((df$CROPDMGEXP %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"+"}\NormalTok{, }\StringTok{"-"}\NormalTok{, }\StringTok{"?"}\NormalTok{)) |}
+\StringTok{                 }\NormalTok{(df$PROPDMGEXP %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"+"}\NormalTok{, }\StringTok{"-"}\NormalTok{, }\StringTok{"?"}\NormalTok{)))}
+\NormalTok{df <-}\StringTok{ }\NormalTok{df[selection, ]}
+\NormalTok{df$PROPDMGFACTOR <-}\StringTok{ }\DecValTok{1}
+\NormalTok{df$PROPDMGFACTOR[df$PROPDMGEXP ==}\StringTok{ "h"}\NormalTok{] <-}\StringTok{ }\DecValTok{100}
+\NormalTok{df$PROPDMGFACTOR[df$PROPDMGEXP ==}\StringTok{ "k"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000}
+\NormalTok{df$PROPDMGFACTOR[df$PROPDMGEXP ==}\StringTok{ "m"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000000}
+\NormalTok{df$PROPDMGFACTOR[df$PROPDMGEXP ==}\StringTok{ "b"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000000000}
+\NormalTok{selection <-}\StringTok{ }\NormalTok{!}\KeywordTok{is.na}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(df$PROPDMGEXP))}
+\NormalTok{df$CROPDMGFACTOR[selection] <-}\StringTok{ }\DecValTok{10}\NormalTok{^}\KeywordTok{as.numeric}\NormalTok{(df$CROPDMGEXP[selection])}
+\NormalTok{df$CROPDMGFACTOR <-}\StringTok{ }\DecValTok{1}
+\NormalTok{df$CROPDMGFACTOR[df$CROPDMGEXP ==}\StringTok{ "h"}\NormalTok{] <-}\StringTok{ }\DecValTok{100}
+\NormalTok{df$CROPDMGFACTOR[df$CROPDMGEXP ==}\StringTok{ "k"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000}
+\NormalTok{df$CROPDMGFACTOR[df$CROPDMGEXP ==}\StringTok{ "m"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000000}
+\NormalTok{df$CROPDMGFACTOR[df$CROPDMGEXP ==}\StringTok{ "b"}\NormalTok{] <-}\StringTok{ }\DecValTok{1000000000}
+\NormalTok{selection <-}\StringTok{ }\NormalTok{!}\KeywordTok{is.na}\NormalTok{(}\KeywordTok{as.numeric}\NormalTok{(df$CROPDMGEXP))}
+\NormalTok{df$CROPDMGFACTOR[selection] <-}\StringTok{ }\DecValTok{10}\NormalTok{^}\KeywordTok{as.numeric}\NormalTok{(df$CROPDMGEXP[selection])}
+\NormalTok{df$TOTALECONDMG <-}\StringTok{ }\KeywordTok{as.numeric}\NormalTok{(df$CROPDMG) *}
+\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(df$PROPDMGFACTOR) +}
+\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(df$PROPDMG) *}
+\StringTok{  }\KeywordTok{as.numeric}\NormalTok{(df$PROPDMGFACTOR)}
+\end{Highlighting}
+\end{Shaded}
+
+Now that we have useful data for economic damage, we will clean the
+event descriptions. The data uses different words for similar weather
+events such as ``very dry'' and ``drought''. We will consolidate the
+data a bit. However, since there are 985 different factor levels, a very
+sophisticated method for consolidation is difficult to develop and
+beyond the scope of this report. Instead we will use a simpler method.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{consolidate <-}\StringTok{ }\NormalTok{function(event)}
+\NormalTok{\{}
+  \NormalTok{if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"hurricane|typhoon|tornado"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"hurricane"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"drought|dry|hot|heat|warm|high temp|warmth"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"heatwave"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"blizzard|hail|snow|glaze"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"blizzard"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"tstm|thunderstorm|wind"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"thunderstorm or heavy wind"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"rain|wet"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"rainfall"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"ice|icy|cold|low temp|freez"}\NormalTok{, event))}
+  \NormalTok{\{ }\StringTok{"low temperature"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"flood|surge"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"flood"} \NormalTok{\}}
+  \NormalTok{else \{ event \}}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+We can now modify the event column using this function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df$EVTYPE <-}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(}\KeywordTok{sapply}\NormalTok{(}\KeywordTok{as.character}\NormalTok{(df$EVTYPE), consolidate))}
+\end{Highlighting}
+\end{Shaded}
+
+We will focus our research to work with recent calamities, considering
+only data from 2005 up to 2011. For this reason, we will begin with a
+suitable date conversion of the BGN\_DATE column.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -331,26 +438,23 @@ subset of the records, in particular it will comprise all records from
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{records <-}\StringTok{ }\KeywordTok{cbind}\NormalTok{(df)[df$YEAR >=}\StringTok{ }\DecValTok{2005}\NormalTok{, ]}
-\KeywordTok{dim}\NormalTok{(records)}
+\NormalTok{records <-}\StringTok{ }\NormalTok{df[df$YEAR >=}\StringTok{ }\DecValTok{2005}\NormalTok{, ]}
 \end{Highlighting}
 \end{Shaded}
-
-\begin{verbatim}
-## [1] 338322     38
-\end{verbatim}
 
 As we can see, we selected a bit more than a third of the original data
 set. The density of reports and the recent years has inceased
 drastically, so it is natural that a small subset of the most recent
-observed years contains a large proportion of the records. We will need
-to observe property and health damage seperately, so we will split our
-data accordingly. \#\#\# Splitting the Data for Further Analysis
+observed years contains a large proportion of the records.
+
+We will need to observe economic and health damage seperately, so we
+will split our data accordingly. \#\#\# Splitting the Data for Further
+Analysis
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{health_df <-}\StringTok{ }\NormalTok{records[, }\KeywordTok{c}\NormalTok{(}\StringTok{"INJURIES"}\NormalTok{, }\StringTok{"FATALITIES"}\NormalTok{, }\StringTok{"EVTYPE"}\NormalTok{)]}
-\NormalTok{prop_df <-}\StringTok{ }\NormalTok{records[, }\KeywordTok{c}\NormalTok{(}\StringTok{"PROPDMG"}\NormalTok{, }\StringTok{"EVTYPE"}\NormalTok{)]}
+\NormalTok{econ_df <-}\StringTok{ }\NormalTok{records[, }\KeywordTok{c}\NormalTok{(}\StringTok{"TOTALECONDMG"}\NormalTok{, }\StringTok{"EVTYPE"}\NormalTok{)]}
 \end{Highlighting}
 \end{Shaded}
 
@@ -368,7 +472,7 @@ Next, we check our subset of the data for missing values.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\KeywordTok{sum}\NormalTok{(}\KeywordTok{matrix}\NormalTok{(}\DataTypeTok{data =} \KeywordTok{is.na}\NormalTok{(prop_df), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{))}
+\KeywordTok{sum}\NormalTok{(}\KeywordTok{matrix}\NormalTok{(}\DataTypeTok{data =} \KeywordTok{is.na}\NormalTok{(econ_df), }\DataTypeTok{ncol =} \DecValTok{1}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -379,7 +483,7 @@ Next, we check our subset of the data for missing values.
 Neither of our data frames have NA values, so we can continue analysing
 the data. We will begin with the health data by grouping by event and
 summing up injuries and fatalities. We will also introduce a variable
-called ``DAMAGE'' that is the weighted sum of injuries (with factor 1)
+called ``DAMAGE'' which is the weighted sum of injuries (with factor 1)
 and fatalities (with factor 4). Additionally, we will sort the data by
 this new column in descending order.
 
@@ -387,29 +491,20 @@ this new column in descending order.
 \begin{Highlighting}[]
 \NormalTok{health_df_agg <-}\StringTok{ }\NormalTok{health_df[, }\KeywordTok{c}\NormalTok{(}\StringTok{"INJURIES"}\NormalTok{, }\StringTok{"FATALITIES"}\NormalTok{)] %>%}
 \StringTok{  }\KeywordTok{group_by}\NormalTok{(health_df$EVTYPE) %>%}\StringTok{ }\KeywordTok{summarise_all}\NormalTok{(}\KeywordTok{funs}\NormalTok{(sum))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## Warning: package 'bindrcpp' was built under R version 3.4.2
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{health_df_agg$DAMAGE =}\StringTok{ }\NormalTok{health_df_agg$INJURIES +}\StringTok{ }\DecValTok{4} \NormalTok{*}\StringTok{ }\NormalTok{health_df_agg$FATALITIES}
 \NormalTok{health_df_agg <-}\StringTok{ }\NormalTok{health_df_agg[}\KeywordTok{order}\NormalTok{(-health_df_agg$DAMAGE, -health_df_agg$FATALITIES), ]}
 \KeywordTok{colnames}\NormalTok{(health_df_agg)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "EVTYPE"}
 \end{Highlighting}
 \end{Shaded}
 
-We will to the same for recorded cases of property damage.
+We will do the same for recorded cases of economic damage.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{prop_df_agg <-}\StringTok{ }\NormalTok{prop_df %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(prop_df$EVTYPE) %>%}
-\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{PROPDMG =} \KeywordTok{sum}\NormalTok{(PROPDMG))}
-\NormalTok{prop_df_agg <-}\StringTok{ }\NormalTok{prop_df_agg[}\KeywordTok{order}\NormalTok{(-prop_df_agg$PROPDMG), ]}
-\KeywordTok{colnames}\NormalTok{(prop_df_agg)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "EVTYPE"}
+\NormalTok{econ_df_agg <-}\StringTok{ }\NormalTok{econ_df %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(econ_df$EVTYPE) %>%}
+\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{TOTALECONDMG =} \KeywordTok{sum}\NormalTok{(TOTALECONDMG))}
+\NormalTok{econ_df_agg <-}\StringTok{ }\NormalTok{econ_df_agg[}\KeywordTok{order}\NormalTok{(-econ_df_agg$TOTALECONDMG), ]}
+\KeywordTok{colnames}\NormalTok{(econ_df_agg)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "EVTYPE"}
 \end{Highlighting}
 \end{Shaded}
 
@@ -417,7 +512,8 @@ We will to the same for recorded cases of property damage.
 
 In this section, we will use the multiplot function. The code and the
 source can be found in the appendix. Unfortunately, due to the strict
-grading guidelines, I am forced to include the code here as well:
+grading guidelines, I am forced to include the code here as well rather
+than only in the appendix:
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -471,80 +567,75 @@ for the economy.
        \DataTypeTok{caption =} \StringTok{"Weighted Population Damage of Various Weather}\CharTok{\textbackslash{}n}\StringTok{Events from 2005 to 2011"}\NormalTok{) +}\StringTok{ }
 \StringTok{  }\CommentTok{#ggtitle("Weighted Population Damage of Various Weather Events from 2005 to 2011") + }
 \StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}
-\NormalTok{h <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data=}\KeywordTok{head}\NormalTok{(prop_df_agg), }\KeywordTok{aes}\NormalTok{(}\KeywordTok{reorder}\NormalTok{(EVTYPE, -PROPDMG), PROPDMG)) +}
+\NormalTok{h <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data=}\KeywordTok{head}\NormalTok{(econ_df_agg), }\KeywordTok{aes}\NormalTok{(}\KeywordTok{reorder}\NormalTok{(EVTYPE, -TOTALECONDMG), TOTALECONDMG)) +}
 \StringTok{  }\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{stat =} \StringTok{"identity"}\NormalTok{, }\DataTypeTok{fill=}\StringTok{"#FF9999"}\NormalTok{, }\DataTypeTok{color =} \StringTok{"black"}\NormalTok{) +}\StringTok{ }
-\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Weather Event"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Property Damage"}\NormalTok{,}
-       \DataTypeTok{caption =} \StringTok{"Property Damage of Various Weather}\CharTok{\textbackslash{}n}\StringTok{Events from 2005 to 2011"}\NormalTok{) +}\StringTok{ }
-\StringTok{  }\CommentTok{#ggtitle("Property Damage of Various Weather Events from 2005 to 2011") + }
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Weather Event"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Economic Damage"}\NormalTok{,}
+       \DataTypeTok{caption =} \StringTok{"Economic Damage of Various Weather}\CharTok{\textbackslash{}n}\StringTok{Events from 2005 to 2011 in USD"}\NormalTok{) +}\StringTok{ }
+\StringTok{  }\CommentTok{#ggtitle("Economic Damage of Various Weather Events from 2005 to 2011") + }
 \StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}
 \KeywordTok{multiplot}\NormalTok{(g, h, }\DataTypeTok{cols =} \DecValTok{2}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{StormData_files/figure-latex/b-1.pdf}
+\includegraphics{StormData_files/figure-latex/damage_plots-1.pdf}
 
-We can easily see that tornadoes have the a tremendous impact on health
+We can easily see that hurricanes have a tremendous impact on health
 according to our weighted damage, followed by excessive heat and
-lightning with much lower numbers. In particular, the numbers of
+thunderstorms with much lower numbers. In particular, the numbers of
 injuries and fatalities due to the 3 most dangerous hazards is as
 follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{health_df_agg[health_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"TORNADO"}\NormalTok{, }\StringTok{"EXCESSIVE HEAT"}\NormalTok{, }\StringTok{"LIGHTNING"}\NormalTok{), ]}
+\NormalTok{health_df_agg[health_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"hurricane"}\NormalTok{, }\StringTok{"heatwave"}\NormalTok{,}
+                                          \StringTok{"thunderstorm or heavy wind"}\NormalTok{), ]}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ## # A tibble: 3 x 4
-##           EVTYPE INJURIES FATALITIES DAMAGE
-##           <fctr>    <dbl>      <dbl>  <dbl>
-## 1        TORNADO    11137        968  15009
-## 2 EXCESSIVE HEAT     2171        482   4099
-## 3      LIGHTNING     1477        242   2445
+##                       EVTYPE INJURIES FATALITIES DAMAGE
+##                       <fctr>    <dbl>      <dbl>  <dbl>
+## 1                  hurricane    11268       1004  15284
+## 2                   heatwave     3397        711   6241
+## 3 thunderstorm or heavy wind     2283        486   4227
 \end{verbatim}
 
-As for property damage, tornodoes cause heavy damage as well. However,
-tornadoes are surpassed by flash flood and, by a huge margin, also by
-thunderstorm wind. The numbers can be seen below:
+As for economic damage, hurricanes cause enormous damage as well. Second
+to them are only flood and far, far behind thunderstorm. The numbers can
+be seen below:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{prop_df_agg[prop_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"THUNDERSTORM WIND"}\NormalTok{, }\StringTok{"FLASH FLOOD"}\NormalTok{, }\StringTok{"TORNADO"}\NormalTok{), ]}
+\NormalTok{econ_df_agg[econ_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"hurricane"}\NormalTok{, }\StringTok{"flood"}\NormalTok{, }\StringTok{"thunderstorm or heavy wind"}\NormalTok{), ]}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
 ## # A tibble: 3 x 2
-##              EVTYPE  PROPDMG
-##              <fctr>    <dbl>
-## 1 THUNDERSTORM WIND 862257.4
-## 2       FLASH FLOOD 637545.2
-## 3           TORNADO 608380.5
+##                       EVTYPE TOTALECONDMG
+##                       <fctr>        <dbl>
+## 1                  hurricane 384394116367
+## 2                      flood 266995036151
+## 3 thunderstorm or heavy wind  15045093540
 \end{verbatim}
 
-Finally, we will have a glance at the trend for injuries and fatalities
-by tornadoes since the beginning of the observations.
+Finally, we will have a glance at the trend for fatalities by hurricanes
+since the beginning of the observations.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{tornado_data <-}\StringTok{ }\NormalTok{df[df$EVTYPE ==}\StringTok{ "TORNADO"}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"INJURIES"}\NormalTok{, }\StringTok{"FATALITIES"}\NormalTok{, }\StringTok{"YEAR"}\NormalTok{)]}
+\NormalTok{tornado_data <-}\StringTok{ }\NormalTok{df[df$EVTYPE ==}\StringTok{ "hurricane"}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"FATALITIES"}\NormalTok{, }\StringTok{"YEAR"}\NormalTok{)]}
 \NormalTok{tornado_data <-}\StringTok{ }\NormalTok{tornado_data %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(tornado_data$YEAR) %>%}
-\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{SUM_INJURIES =} \KeywordTok{sum}\NormalTok{(INJURIES), }\DataTypeTok{SUM_FATALITIES =} \KeywordTok{sum}\NormalTok{(FATALITIES))}
+\StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{SUM_FATALITIES =} \KeywordTok{sum}\NormalTok{(FATALITIES))}
 \KeywordTok{colnames}\NormalTok{(tornado_data)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "YEAR"}
 \NormalTok{g <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data=}\NormalTok{tornado_data, }\KeywordTok{aes}\NormalTok{(YEAR)) +}
-\StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{tornado_data$SUM_INJURIES)) +}\StringTok{ }
-\StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \KeywordTok{seq}\NormalTok{(}\DecValTok{1950}\NormalTok{, }\DecValTok{2011}\NormalTok{, }\DecValTok{5}\NormalTok{),}\DecValTok{1}\NormalTok{) +}
-\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Year"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Injuries"}\NormalTok{,}
-       \DataTypeTok{caption =} \StringTok{"Injuries by Tornadoes per Year"}\NormalTok{) +}\StringTok{ }
-\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}
-\NormalTok{h <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data=}\NormalTok{tornado_data, }\KeywordTok{aes}\NormalTok{(YEAR)) +}
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{tornado_data$SUM_FATALITIES)) +}\StringTok{ }
-\StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \KeywordTok{seq}\NormalTok{(}\DecValTok{1950}\NormalTok{, }\DecValTok{2011}\NormalTok{, }\DecValTok{5}\NormalTok{),}\DecValTok{1}\NormalTok{) +}
-\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Year"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Fatalities"}\NormalTok{,}
-       \DataTypeTok{caption =} \StringTok{"Fatalities by Tornadoes per Year"}\NormalTok{) +}\StringTok{ }
-\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{)) }
-\KeywordTok{multiplot}\NormalTok{(g, h)}
+\StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \KeywordTok{seq}\NormalTok{(}\DecValTok{1950}\NormalTok{, }\DecValTok{2011}\NormalTok{, }\DecValTok{5}\NormalTok{), }\StringTok{"Year"}\NormalTok{) +}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Year"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Injuries"}\NormalTok{,}
+       \DataTypeTok{caption =} \StringTok{"Fatalities by Hurricanes per Year"}\NormalTok{) +}\StringTok{ }
+\StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}
+\NormalTok{g}
 \end{Highlighting}
 \end{Shaded}
 
@@ -554,9 +645,9 @@ As we can see, there are some spikes in the data corresponding to
 extraordinarily threatening tornadoes.
 
 We conclude our analysis with the remark that the most dangerous hazards
-for population health are indeed tornadoes, excessive heat and
-lightning. The most property damage is caused by thunderstorm wind,
-flash flood and tornadoes.
+for population health are indeed hurricanes, excessive heat and
+thunderstorms. The most economic damage is caused by hurricanes and
+flood.
 
 \subsection{Appendix}\label{appendix}
 
