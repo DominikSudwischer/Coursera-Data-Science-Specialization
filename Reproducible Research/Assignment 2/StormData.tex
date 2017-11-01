@@ -137,10 +137,10 @@ groups: population health damage such as injuries or fatalities and
 economic damage like destruction of property. Our main goal is to
 analyse which type of events were most dangerous to each of the two
 categories during the years from 2005 through 2011. Our analysis will
-show that the top 3 hazards with direct health impact are hurricanes,
+show that the top 3 hazards with direct health impact are tornadoes,
 excessive heat and thunderstorms while the destructive force of
-hurricanes, flood and - to much less extent - thunderstorms caused the
-majority of economic damage.
+hurricanes, flood and - to much less extent - tornadoes and
+thunderstorms caused the majority of economic damage.
 
 \subsection{Used Packages}\label{used-packages}
 
@@ -392,8 +392,10 @@ beyond the scope of this report. Instead we will use a simpler method.
 \begin{Highlighting}[]
 \NormalTok{consolidate <-}\StringTok{ }\NormalTok{function(event)}
 \NormalTok{\{}
-  \NormalTok{if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"hurricane|typhoon|tornado"}\NormalTok{, event))}
-    \NormalTok{\{ }\StringTok{"hurricane"} \NormalTok{\}}
+  \NormalTok{if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"hurricane|typhoon|cyclone"}\NormalTok{, event))}
+  \NormalTok{\{ }\StringTok{"hurricane"} \NormalTok{\}}
+  \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"tornado"}\NormalTok{, event))}
+    \NormalTok{\{ }\StringTok{"tornado"} \NormalTok{\}}
   \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"drought|dry|hot|heat|warm|high temp|warmth"}\NormalTok{, event))}
     \NormalTok{\{ }\StringTok{"heatwave"} \NormalTok{\}}
   \NormalTok{else if(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"blizzard|hail|snow|glaze"}\NormalTok{, event))}
@@ -511,49 +513,7 @@ We will do the same for recorded cases of economic damage.
 \subsection{Results}\label{results}
 
 In this section, we will use the multiplot function. The code and the
-source can be found in the appendix. Unfortunately, due to the strict
-grading guidelines, I am forced to include the code here as well rather
-than only in the appendix:
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{multiplot <-}\StringTok{ }\NormalTok{function(..., }\DataTypeTok{plotlist=}\OtherTok{NULL}\NormalTok{, file, }\DataTypeTok{cols=}\DecValTok{1}\NormalTok{, }\DataTypeTok{layout=}\OtherTok{NULL}\NormalTok{) \{}
-  \KeywordTok{library}\NormalTok{(grid)}
-
-  \CommentTok{# Make a list from the ... arguments and plotlist}
-  \NormalTok{plots <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\KeywordTok{list}\NormalTok{(...), plotlist)}
-
-  \NormalTok{numPlots =}\StringTok{ }\KeywordTok{length}\NormalTok{(plots)}
-
-  \CommentTok{# If layout is NULL, then use 'cols' to determine layout}
-  \NormalTok{if (}\KeywordTok{is.null}\NormalTok{(layout)) \{}
-    \CommentTok{# Make the panel}
-    \CommentTok{# ncol: Number of columns of plots}
-    \CommentTok{# nrow: Number of rows needed, calculated from # of cols}
-    \NormalTok{layout <-}\StringTok{ }\KeywordTok{matrix}\NormalTok{(}\KeywordTok{seq}\NormalTok{(}\DecValTok{1}\NormalTok{, cols *}\StringTok{ }\KeywordTok{ceiling}\NormalTok{(numPlots/cols)),}
-                    \DataTypeTok{ncol =} \NormalTok{cols, }\DataTypeTok{nrow =} \KeywordTok{ceiling}\NormalTok{(numPlots/cols))}
-  \NormalTok{\}}
-
- \NormalTok{if (numPlots==}\DecValTok{1}\NormalTok{) \{}
-    \KeywordTok{print}\NormalTok{(plots[[}\DecValTok{1}\NormalTok{]])}
-
-  \NormalTok{\} else \{}
-    \CommentTok{# Set up the page}
-    \KeywordTok{grid.newpage}\NormalTok{()}
-    \KeywordTok{pushViewport}\NormalTok{(}\KeywordTok{viewport}\NormalTok{(}\DataTypeTok{layout =} \KeywordTok{grid.layout}\NormalTok{(}\KeywordTok{nrow}\NormalTok{(layout), }\KeywordTok{ncol}\NormalTok{(layout))))}
-
-    \CommentTok{# Make each plot, in the correct location}
-    \NormalTok{for (i in }\DecValTok{1}\NormalTok{:numPlots) \{}
-      \CommentTok{# Get the i,j matrix positions of the regions that contain this subplot}
-      \NormalTok{matchidx <-}\StringTok{ }\KeywordTok{as.data.frame}\NormalTok{(}\KeywordTok{which}\NormalTok{(layout ==}\StringTok{ }\NormalTok{i, }\DataTypeTok{arr.ind =} \OtherTok{TRUE}\NormalTok{))}
-
-      \KeywordTok{print}\NormalTok{(plots[[i]], }\DataTypeTok{vp =} \KeywordTok{viewport}\NormalTok{(}\DataTypeTok{layout.pos.row =} \NormalTok{matchidx$row,}
-                                      \DataTypeTok{layout.pos.col =} \NormalTok{matchidx$col))}
-    \NormalTok{\}}
-  \NormalTok{\}}
-\NormalTok{\}}
-\end{Highlighting}
-\end{Shaded}
+source can be found in the appendix.
 
 The preparations performed above allow us to generate insights from the
 data. We will begin with a bar plot of the 6 top hazards for health and
@@ -587,7 +547,7 @@ follows:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{health_df_agg[health_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"hurricane"}\NormalTok{, }\StringTok{"heatwave"}\NormalTok{,}
+\NormalTok{health_df_agg[health_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"tornado"}\NormalTok{, }\StringTok{"heatwave"}\NormalTok{,}
                                           \StringTok{"thunderstorm or heavy wind"}\NormalTok{), ]}
 \end{Highlighting}
 \end{Shaded}
@@ -596,36 +556,37 @@ follows:
 ## # A tibble: 3 x 4
 ##                       EVTYPE INJURIES FATALITIES DAMAGE
 ##                       <fctr>    <dbl>      <dbl>  <dbl>
-## 1                  hurricane    11268       1004  15284
+## 1                    tornado    11137        968  15009
 ## 2                   heatwave     3397        711   6241
 ## 3 thunderstorm or heavy wind     2283        486   4227
 \end{verbatim}
 
 As for economic damage, hurricanes cause enormous damage as well. Second
-to them are only flood and far, far behind thunderstorm. The numbers can
-be seen below:
+to them are only flood and far, far behind tornadoes and thunderstorms.
+The numbers can be seen below:
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{econ_df_agg[econ_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"hurricane"}\NormalTok{, }\StringTok{"flood"}\NormalTok{, }\StringTok{"thunderstorm or heavy wind"}\NormalTok{), ]}
+\NormalTok{econ_df_agg[econ_df_agg$EVTYPE %in%}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"hurricane"}\NormalTok{, }\StringTok{"flood"}\NormalTok{, }\StringTok{"tornado"}\NormalTok{, }\StringTok{"thunderstorm or heavy wind"}\NormalTok{), ]}
 \end{Highlighting}
 \end{Shaded}
 
 \begin{verbatim}
-## # A tibble: 3 x 2
+## # A tibble: 4 x 2
 ##                       EVTYPE TOTALECONDMG
 ##                       <fctr>        <dbl>
-## 1                  hurricane 384394116367
+## 1                  hurricane 355336906330
 ## 2                      flood 266995036151
-## 3 thunderstorm or heavy wind  15045093540
+## 3                    tornado  29057210037
+## 4 thunderstorm or heavy wind  15045093540
 \end{verbatim}
 
-Finally, we will have a glance at the trend for fatalities by hurricanes
+Finally, we will have a glance at the trend for fatalities by tornadoes
 since the beginning of the observations.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{tornado_data <-}\StringTok{ }\NormalTok{df[df$EVTYPE ==}\StringTok{ "hurricane"}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"FATALITIES"}\NormalTok{, }\StringTok{"YEAR"}\NormalTok{)]}
+\NormalTok{tornado_data <-}\StringTok{ }\NormalTok{df[df$EVTYPE ==}\StringTok{ "tornado"}\NormalTok{, }\KeywordTok{c}\NormalTok{(}\StringTok{"FATALITIES"}\NormalTok{, }\StringTok{"YEAR"}\NormalTok{)]}
 \NormalTok{tornado_data <-}\StringTok{ }\NormalTok{tornado_data %>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(tornado_data$YEAR) %>%}
 \StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{SUM_FATALITIES =} \KeywordTok{sum}\NormalTok{(FATALITIES))}
 \KeywordTok{colnames}\NormalTok{(tornado_data)[}\DecValTok{1}\NormalTok{] =}\StringTok{ "YEAR"}
@@ -633,7 +594,7 @@ since the beginning of the observations.
 \StringTok{  }\KeywordTok{geom_line}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{y =} \NormalTok{tornado_data$SUM_FATALITIES)) +}\StringTok{ }
 \StringTok{  }\KeywordTok{scale_x_continuous}\NormalTok{(}\DataTypeTok{breaks =} \KeywordTok{seq}\NormalTok{(}\DecValTok{1950}\NormalTok{, }\DecValTok{2011}\NormalTok{, }\DecValTok{5}\NormalTok{), }\StringTok{"Year"}\NormalTok{) +}
 \StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Year"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Injuries"}\NormalTok{,}
-       \DataTypeTok{caption =} \StringTok{"Fatalities by Hurricanes per Year"}\NormalTok{) +}\StringTok{ }
+       \DataTypeTok{caption =} \StringTok{"Fatalities by Tornadoes per Year"}\NormalTok{) +}\StringTok{ }
 \StringTok{  }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{45}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}
 \NormalTok{g}
 \end{Highlighting}
@@ -645,7 +606,7 @@ As we can see, there are some spikes in the data corresponding to
 extraordinarily threatening tornadoes.
 
 We conclude our analysis with the remark that the most dangerous hazards
-for population health are indeed hurricanes, excessive heat and
+for population health are indeed tornadoes, excessive heat and
 thunderstorms. The most economic damage is caused by hurricanes and
 flood.
 

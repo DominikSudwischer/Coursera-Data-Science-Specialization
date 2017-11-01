@@ -5,7 +5,7 @@ Dominik Sudwischer
 
 
 ## Synopsis
-This analysis examines the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database contains records of storms and related weather events in the United States including estimations of caused damage. The damage can be categorized in two groups: population health damage such as injuries or fatalities and economic damage like destruction of property. Our main goal is to analyse which type of events were most dangerous to each of the two categories during the years from 2005 through 2011. Our analysis will show that the top 3 hazards with direct health impact are hurricanes, excessive heat and thunderstorms while the destructive force of hurricanes, flood and - to much less extent - thunderstorms caused the majority of economic damage.
+This analysis examines the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database contains records of storms and related weather events in the United States including estimations of caused damage. The damage can be categorized in two groups: population health damage such as injuries or fatalities and economic damage like destruction of property. Our main goal is to analyse which type of events were most dangerous to each of the two categories during the years from 2005 through 2011. Our analysis will show that the top 3 hazards with direct health impact are tornadoes, excessive heat and thunderstorms while the destructive force of hurricanes, flood and - to much less extent - tornadoes and thunderstorms caused the majority of economic damage.
 
 ## Used Packages
 The following packages will be used in this report:
@@ -221,8 +221,10 @@ Now that we have useful data for economic damage, we will clean the event descri
 ```r
 consolidate <- function(event)
 {
-  if(grepl("hurricane|typhoon|tornado", event))
-    { "hurricane" }
+  if(grepl("hurricane|typhoon|cyclone", event))
+  { "hurricane" }
+  else if(grepl("tornado", event))
+    { "tornado" }
   else if(grepl("drought|dry|hot|heat|warm|high temp|warmth", event))
     { "heatwave" }
   else if(grepl("blizzard|hail|snow|glaze", event))
@@ -301,45 +303,8 @@ colnames(econ_df_agg)[1] = "EVTYPE"
 ```
 
 ## Results
-In this section, we will use the multiplot function. The code and the source can be found in the appendix. Unfortunately, due to the strict grading guidelines, I am forced to include the code here as well rather than only in the appendix:
+In this section, we will use the multiplot function. The code and the source can be found in the appendix.
 
-```r
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  library(grid)
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                    ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
- if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
-```
 
 
 The preparations performed above allow us to generate insights from the data. We will begin with a bar plot of the 6 top hazards for health and for the economy. 
@@ -365,7 +330,7 @@ multiplot(g, h, cols = 2)
 We can easily see that hurricanes have a tremendous impact on health according to our weighted damage, followed by excessive heat and thunderstorms with much lower numbers. In particular, the numbers of injuries and fatalities due to the 3 most dangerous hazards is as follows:
 
 ```r
-health_df_agg[health_df_agg$EVTYPE %in% c("hurricane", "heatwave",
+health_df_agg[health_df_agg$EVTYPE %in% c("tornado", "heatwave",
                                           "thunderstorm or heavy wind"), ]
 ```
 
@@ -373,30 +338,31 @@ health_df_agg[health_df_agg$EVTYPE %in% c("hurricane", "heatwave",
 ## # A tibble: 3 x 4
 ##                       EVTYPE INJURIES FATALITIES DAMAGE
 ##                       <fctr>    <dbl>      <dbl>  <dbl>
-## 1                  hurricane    11268       1004  15284
+## 1                    tornado    11137        968  15009
 ## 2                   heatwave     3397        711   6241
 ## 3 thunderstorm or heavy wind     2283        486   4227
 ```
 
-As for economic damage, hurricanes cause enormous damage as well. Second to them are only flood and far, far behind thunderstorm. The numbers can be seen below:
+As for economic damage, hurricanes cause enormous damage as well. Second to them are only flood and far, far behind tornadoes and thunderstorms. The numbers can be seen below:
 
 ```r
-econ_df_agg[econ_df_agg$EVTYPE %in% c("hurricane", "flood", "thunderstorm or heavy wind"), ]
+econ_df_agg[econ_df_agg$EVTYPE %in% c("hurricane", "flood", "tornado", "thunderstorm or heavy wind"), ]
 ```
 
 ```
-## # A tibble: 3 x 2
+## # A tibble: 4 x 2
 ##                       EVTYPE TOTALECONDMG
 ##                       <fctr>        <dbl>
-## 1                  hurricane 384394116367
+## 1                  hurricane 355336906330
 ## 2                      flood 266995036151
-## 3 thunderstorm or heavy wind  15045093540
+## 3                    tornado  29057210037
+## 4 thunderstorm or heavy wind  15045093540
 ```
 
-Finally, we will have a glance at the trend for fatalities by hurricanes since the beginning of the observations.
+Finally, we will have a glance at the trend for fatalities by tornadoes since the beginning of the observations.
 
 ```r
-tornado_data <- df[df$EVTYPE == "hurricane", c("FATALITIES", "YEAR")]
+tornado_data <- df[df$EVTYPE == "tornado", c("FATALITIES", "YEAR")]
 tornado_data <- tornado_data %>% group_by(tornado_data$YEAR) %>%
   summarise(SUM_FATALITIES = sum(FATALITIES))
 colnames(tornado_data)[1] = "YEAR"
@@ -404,7 +370,7 @@ g <- ggplot(data=tornado_data, aes(YEAR)) +
   geom_line(aes(y = tornado_data$SUM_FATALITIES)) + 
   scale_x_continuous(breaks = seq(1950, 2011, 5), "Year") +
   labs(x = "Year", y = "Injuries",
-       caption = "Fatalities by Hurricanes per Year") + 
+       caption = "Fatalities by Tornadoes per Year") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 g
 ```
@@ -413,7 +379,7 @@ g
 
 As we can see, there are some spikes in the data corresponding to extraordinarily threatening tornadoes.
 
-We conclude our analysis with the remark that the most dangerous hazards for population health are indeed hurricanes, excessive heat and thunderstorms. The most economic damage is caused by hurricanes and flood.
+We conclude our analysis with the remark that the most dangerous hazards for population health are indeed tornadoes, excessive heat and thunderstorms. The most economic damage is caused by hurricanes and flood.
 
 ## Appendix
 This is the definition of the multiplot function. [Source][1]:
