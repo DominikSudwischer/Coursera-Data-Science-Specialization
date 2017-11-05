@@ -12,7 +12,9 @@ SCC$EI.Sector <- tolower(SCC$EI.Sector)
 
 # Filter and aggregate data
 # First, we filter for Baltimore City and then look for emission sources in SCC with "vehicle"
-# in it and finally merge (inner join) the filtered NEI with the filtered SCC to only keep relevant entries
+# in it and finally merge (inner join) the filtered NEI with the filtered SCC to only keep relevant entries.
+# A more precisely formulated question would have allowed to select sources based on different criteria, such
+# as categorie "on road" or by also including the words "motorcycles" etc.
 NEI <- NEI[NEI$fips == "24510", ]
 SCC <- SCC[grepl("vehicle", SCC$EI.Sector), ]
 NEI <- merge(NEI, SCC, by.x = "SCC", by.y = "SCC")
