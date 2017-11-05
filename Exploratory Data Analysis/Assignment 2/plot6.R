@@ -20,18 +20,24 @@ NEI <- merge(NEI, SCC, by.x = "SCC", by.y = "SCC")
 total <- NEI %>% group_by(NEI$year, NEI$fips) %>% summarise(total_tons_pm25 = sum(Emissions))
 names(total)[c(1, 2)] <- c("year", "city")
 
-# Subset data by city
-los_angeles <- subset(total, city == "06037")
-baltimore <- subset(total, city == "24510")
+# Normalize data with respect to the base year 1999 and calculate percentage change
+base_data <- total %>%
+  group_by(city) %>%
+  summarise(base = first(total_tons_pm25, order_by = year)) %>%
+  select(city, base)
+total <- merge(total, base_data, by = "city")
+total <- total %>%
+  mutate(pct_change = 100 * (total_tons_pm25 / base -1 )) %>%
+  filter(year > 1999) %>%
+  mutate(city_name = ifelse(city == "24510", "Baltimore", "Los Angeles"))
+
+# Note: Since I am only allowed to include exactly one plot, I chose percentage change as measurement.
+# Under normal circumstances, I would have added a second plot to the figure to also show absolute changes.
 
 # Create the plot
-#png(file = "plot6.png")
-plot(los_angeles$year, los_angeles$total_tons_pm25, type = "o",
-     main = "Total PM2.5 Emissions from Vehicles in Baltimore City vs. Los Angeles", xlab = "Year",
-     ylab = "PM2.5 Emissions (tons)", xaxt = "n", col = "red",
-     ylim = c(0, max(los_angeles$total_tons_pm25)))
-lines(baltimore$year, baltimore$total_tons_pm25, col = "green")
-axis(side = 1, at = total$year, labels = total$year)
-#dev.off()
-
-fips == "06037"
+png(file = "plot6.png")
+ggplot(data = total, aes(x = factor(year), y = pct_change, fill = factor(city_name))) +
+  geom_col(position = "dodge") +
+  ggtitle("Change of PM 2.5 Emission Compared to the Base Year 1999") +
+  labs(x = "Year", y = "Emission Change (%)", fill = "City")
+dev.off()

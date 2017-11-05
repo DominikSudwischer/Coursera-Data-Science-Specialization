@@ -17,7 +17,7 @@ names(total)[1] <- "year"
 # Create the plot
 png(file = "plot2.png")
 plot(total$year, total$total_tons_pm25, type = "o",
-     main = "Total PM2.5 Emissions in Baltimore City, Mariland", xlab = "Year",
+     main = "Total PM2.5 Emissions in Baltimore City, Maryland", xlab = "Year",
      ylab = "PM2.5 Emissions (tons)", xaxt = "n")
 axis(side = 1, at = total$year, labels = total$year)
 dev.off()
