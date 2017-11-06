@@ -16,8 +16,8 @@ names(total)[1] <- "year"
 
 # Create the plot
 png(file = "plot2.png")
-plot(total$year, total$total_tons_pm25, type = "o",
+barplot(height = total$total_tons_pm25,
      main = "Total PM2.5 Emissions in Baltimore City, Maryland", xlab = "Year",
-     ylab = "PM2.5 Emissions (tons)", xaxt = "n")
-axis(side = 1, at = total$year, labels = total$year)
+     names.arg = total$year,
+     ylab = "PM2.5 Emissions (tons)")
 dev.off()
